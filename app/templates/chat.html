@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% block title %}Chat — LearnBot{% endblock %}
+
+{% block content %}
+<div class="chat-layout d-flex" style="height: calc(100vh - 72px);">
+
+  <!-- ── SIDEBAR ─────────────────────────────────────────────── -->
+  <aside class="chat-sidebar d-none d-lg-flex flex-column p-3 border-end glass-sidebar" style="width:280px;min-width:280px;">
+    <h6 class="fw-bold text-muted text-uppercase letter-spacing mb-3">
+      <i class="bi bi-sliders me-2"></i>Settings
+    </h6>
+
+    <!-- Proficiency -->
+    <label class="form-label fw-semibold small">Proficiency Level</label>
+    <div class="btn-group-vertical w-100 mb-3" id="proficiencyGroup">
+      {% for level in ['Beginner','Intermediate','Expert'] %}
+      <input type="radio" class="btn-check" name="proficiency" id="p{{ level }}"
+             value="{{ level }}" {% if proficiency == level %}checked{% endif %}>
+      <label class="btn btn-outline-primary btn-sm text-start" for="p{{ level }}">
+        {% if level == 'Beginner' %}<i class="bi bi-emoji-smile me-2"></i>
+        {% elif level == 'Intermediate' %}<i class="bi bi-person-check me-2"></i>
+        {% else %}<i class="bi bi-mortarboard me-2"></i>{% endif %}
+        {{ level }}
+      </label>
+      {% endfor %}
+    </div>
+
+    <!-- Subject -->
+    <label class="form-label fw-semibold small" for="subjectSelect">Subject</label>
+    <select class="form-select form-select-sm mb-3" id="subjectSelect">
+      {% set icons = {'Computer Science':'cpu','Mathematics':'calculator','Physics':'lightning','Chemistry':'flask','Biology':'heart-pulse','Engineering':'gear','Business Studies':'briefcase','General / Other':'book'} %}
+      {% for s in subjects %}
+      <option value="{{ s }}" {% if subject == s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+
+    <!-- Documents -->
+    <div class="mt-auto">
+      <h6 class="fw-bold text-muted text-uppercase letter-spacing mb-2 small">
+        <i class="bi bi-files me-1"></i>Documents ({{ documents|length }})
+      </h6>
+      {% if documents %}
+        {% for doc in documents[-3:][::-1] %}
+        <div class="doc-chip d-flex align-items-center gap-2 mb-1 p-2 rounded-3">
+          <i class="bi bi-file-earmark-text text-primary flex-shrink-0"></i>
+          <span class="small text-truncate">{{ doc.filename }}</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="text-muted small">No documents yet.<br/>
+          <a href="/upload/" class="text-primary">Upload one</a>
+        </p>
+      {% endif %}
+      <a href="/upload/" class="btn btn-outline-primary btn-sm w-100 mt-2 rounded-pill">
+        <i class="bi bi-plus-lg me-1"></i>Add Document
+      </a>
+    </div>
+  </aside>
+
+  <!-- ── CHAT AREA ───────────────────────────────────────────── -->
+  <div class="chat-main d-flex flex-column flex-grow-1 overflow-hidden">
+
+    <!-- Chat header -->
+    <div class="chat-header d-flex align-items-center gap-3 px-4 py-3 border-bottom">
+      <!-- Mobile sidebar toggle -->
+      <button class="btn btn-sm btn-ghost d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar">
+        <i class="bi bi-sliders fs-5"></i>
+      </button>
+      <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center text-white flex-shrink-0">
+        <i class="bi bi-mortarboard-fill"></i>
+      </div>
+      <div>
+        <p class="mb-0 fw-semibold">{{ agent_name }}</p>
+        <small class="text-success"><i class="bi bi-circle-fill me-1" style="font-size:.5rem"></i>Online</small>
+      </div>
+      <div class="ms-auto d-flex gap-2">
+        <span class="badge bg-primary-subtle text-primary rounded-pill" id="proficiencyBadge">{{ proficiency }}</span>
+        <span class="badge bg-secondary-subtle text-secondary rounded-pill d-none d-md-inline" id="subjectBadge">{{ subject }}</span>
+        <button class="btn btn-sm btn-ghost text-danger" id="clearChatBtn" title="Clear chat">
+          <i class="bi bi-trash"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="chat-messages flex-grow-1 overflow-auto p-4" id="chatMessages">
+      <!-- Welcome message -->
+      <div class="msg-row bot animate-fadein" id="welcomeMsg">
+        <div class="msg-bubble bot-bubble p-3 rounded-4">
+          <p class="mb-2">👋 <strong>Hello! I'm {{ agent_name }}.</strong></p>
+          <p class="mb-2">I'm your AI-powered course simplification assistant. Here's what I can do:</p>
+          <ul class="small mb-2">
+            <li>📘 Explain complex academic topics at your level</li>
+            <li>🔑 Highlight key concepts and definitions</li>
+            <li>🌍 Provide real-world analogies and examples</li>
+            <li>❓ Generate practice questions and quizzes</li>
+            <li>📚 Recommend what to study next</li>
+          </ul>
+          <p class="mb-0 small text-muted">Upload a document first for best results, or just ask me anything!</p>
+        </div>
+      </div>
+
+      <!-- Previous history -->
+      {% for msg in chat_history %}
+      <div class="msg-row {{ 'user' if msg.role == 'user' else 'bot' }}">
+        <div class="msg-bubble {{ 'user-bubble' if msg.role == 'user' else 'bot-bubble' }} p-3 rounded-4">
+          {% if msg.role == 'assistant' %}
+            <div class="markdown-content">{{ msg.content }}</div>
+          {% else %}
+            {{ msg.content }}
+          {% endif %}
+          <div class="msg-time text-end mt-1"><small class="text-muted">{{ msg.time }}</small></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Typing indicator (hidden by default) -->
+    <div class="px-4 py-1" id="typingIndicator" style="display:none!important">
+      <div class="msg-row bot">
+        <div class="msg-bubble bot-bubble p-3 rounded-4 d-inline-flex">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input area -->
+    <div class="chat-input-area p-3 border-top">
+      <!-- Quick actions -->
+      <div class="quick-actions d-flex gap-2 mb-2 flex-wrap">
+        <button class="btn btn-xs btn-outline-secondary rounded-pill quick-btn"
+                data-msg="Summarize the main topics from my uploaded document">
+          <i class="bi bi-journal-text me-1"></i>Summarize
+        </button>
+        <button class="btn btn-xs btn-outline-secondary rounded-pill quick-btn"
+                data-msg="Generate 5 practice questions based on the content">
+          <i class="bi bi-patch-question me-1"></i>Quiz Me
+        </button>
+        <button class="btn btn-xs btn-outline-secondary rounded-pill quick-btn"
+                data-msg="What are the key concepts I should understand from this material?">
+          <i class="bi bi-key me-1"></i>Key Concepts
+        </button>
+        <button class="btn btn-xs btn-outline-secondary rounded-pill quick-btn"
+                data-msg="What topics should I study before and after this content?">
+          <i class="bi bi-signpost-split me-1"></i>Roadmap
+        </button>
+      </div>
+      <div class="input-group">
+        <textarea class="form-control rounded-start-4 border-end-0" id="chatInput"
+                  placeholder="Ask a question about your document or any academic topic…"
+                  rows="1" style="resize:none;overflow:hidden;max-height:120px"></textarea>
+        <button class="btn btn-primary rounded-end-4 px-3" id="sendBtn">
+          <i class="bi bi-send-fill"></i>
+        </button>
+      </div>
+      <div class="d-flex justify-content-between mt-1">
+        <small class="text-muted">Press <kbd>Enter</kbd> to send · <kbd>Shift+Enter</kbd> for new line</small>
+        <small class="text-muted" id="ragIndicator"></small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Mobile offcanvas sidebar -->
+<div class="offcanvas offcanvas-start" id="mobileSidebar">
+  <div class="offcanvas-header">
+    <h6 class="offcanvas-title fw-bold">Settings</h6>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+  </div>
+  <div class="offcanvas-body">
+    <label class="form-label fw-semibold small">Proficiency Level</label>
+    <div class="btn-group-vertical w-100 mb-3" id="proficiencyGroupMobile">
+      {% for level in ['Beginner','Intermediate','Expert'] %}
+      <input type="radio" class="btn-check" name="proficiencyMobile" id="pm{{ level }}"
+             value="{{ level }}" {% if proficiency == level %}checked{% endif %}>
+      <label class="btn btn-outline-primary btn-sm text-start" for="pm{{ level }}">{{ level }}</label>
+      {% endfor %}
+    </div>
+    <label class="form-label fw-semibold small" for="subjectSelectMobile">Subject</label>
+    <select class="form-select form-select-sm mb-3" id="subjectSelectMobile">
+      {% for s in subjects %}
+      <option value="{{ s }}" {% if subject == s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+    <a href="/upload/" class="btn btn-outline-primary btn-sm w-100 rounded-pill">
+      <i class="bi bi-cloud-upload me-1"></i>Upload Document
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}

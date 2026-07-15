@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}Settings — LearnBot{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width:760px">
+  <div class="text-center mb-5">
+    <h1 class="fw-bold"><i class="bi bi-gear text-primary me-2"></i>Settings</h1>
+    <p class="text-muted">Customize your learning experience and configure the AI agent.</p>
+  </div>
+
+  <!-- ── LEARNING PREFERENCES ──────────────────────────────── -->
+  <div class="glass-card rounded-4 p-4 mb-4">
+    <h5 class="fw-bold mb-4"><i class="bi bi-person-gear me-2 text-primary"></i>Learning Preferences</h5>
+    <div class="row g-4">
+      <div class="col-sm-6">
+        <label class="form-label fw-semibold">Proficiency Level</label>
+        <div class="d-flex flex-column gap-2" id="proficiencySettings">
+          {% for level in ['Beginner','Intermediate','Expert'] %}
+          <div class="form-check form-check-inline p-0">
+            <input class="btn-check" type="radio" name="settingsProficiency"
+                   id="sp{{ level }}" value="{{ level }}"
+                   {% if current_proficiency == level %}checked{% endif %}>
+            <label class="btn btn-outline-primary w-100 text-start" for="sp{{ level }}">
+              {% if level == 'Beginner' %}<i class="bi bi-emoji-smile me-2 text-success"></i>
+              {% elif level == 'Intermediate' %}<i class="bi bi-person-check me-2 text-warning"></i>
+              {% else %}<i class="bi bi-mortarboard me-2 text-danger"></i>{% endif %}
+              {{ level }}
+              <small class="d-block text-muted fw-normal">
+                {% if level == 'Beginner' %}Simple language, no jargon
+                {% elif level == 'Intermediate' %}Moderate depth, some terms
+                {% else %}Full technical vocabulary{% endif %}
+              </small>
+            </label>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="col-sm-6">
+        <label class="form-label fw-semibold" for="settingsSubject">Default Subject</label>
+        <select class="form-select mb-3" id="settingsSubject">
+          {% for s in subjects %}
+          <option value="{{ s }}" {% if current_subject == s %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+        <label class="form-label fw-semibold mt-2">Agent Tone</label>
+        <select class="form-select mb-3" id="settingsTone" disabled>
+          {% for tone in tones %}
+          <option {% if tone == current_tone %}selected{% endif %}>{{ tone }}</option>
+          {% endfor %}
+        </select>
+        <small class="text-muted d-block mb-2">
+          <i class="bi bi-info-circle me-1"></i>
+          Tone and Teaching Style are set in <code>app/core/agent_instructions.py</code>.
+        </small>
+        <label class="form-label fw-semibold">Teaching Style</label>
+        <select class="form-select" id="settingsStyle" disabled>
+          {% for style in styles %}
+          <option {% if style == current_style %}selected{% endif %}>{{ style }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <hr class="my-4"/>
+    <div class="d-flex justify-content-end">
+      <button class="btn btn-primary rounded-pill px-4" id="saveSettingsBtn">
+        <i class="bi bi-check-lg me-2"></i>Save Preferences
+      </button>
+    </div>
+  </div>
+
+  <!-- ── WATSONX CONNECTION ──────────────────────────────── -->
+  <div class="glass-card rounded-4 p-4 mb-4">
+    <h5 class="fw-bold mb-4"><i class="bi bi-cloud-check me-2 text-info"></i>IBM watsonx.ai Connection</h5>
+    <div class="table-responsive">
+      <table class="table table-sm table-borderless mb-4">
+        <tbody>
+          <tr>
+            <td class="text-muted fw-semibold" style="width:160px">Model</td>
+            <td><code>ibm/granite-3-8b-instruct</code></td>
+          </tr>
+          <tr>
+            <td class="text-muted fw-semibold">Region</td>
+            <td><code>us-south.ml.cloud.ibm.com</code></td>
+          </tr>
+          <tr>
+            <td class="text-muted fw-semibold">API Key</td>
+            <td><span class="badge bg-secondary-subtle text-secondary rounded-pill">Set in .env</span></td>
+          </tr>
+          <tr>
+            <td class="text-muted fw-semibold">Project ID</td>
+            <td><span class="badge bg-secondary-subtle text-secondary rounded-pill">Set in .env</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="connectionResult" class="mb-3 d-none"></div>
+    <button class="btn btn-outline-info rounded-pill" id="testConnectionBtn">
+      <span class="spinner-border spinner-border-sm me-2 d-none" id="connSpinner"></span>
+      <i class="bi bi-wifi me-2 conn-icon"></i>Test Connection
+    </button>
+  </div>
+
+  <!-- ── AGENT CUSTOMIZATION INFO ──────────────────────────── -->
+  <div class="glass-card rounded-4 p-4 mb-4">
+    <h5 class="fw-bold mb-3"><i class="bi bi-sliders2 me-2 text-warning"></i>Agent Customization</h5>
+    <p class="text-muted small mb-3">
+      The agent's behavior, tone, teaching style, and response format are controlled by 
+      <code>app/core/agent_instructions.py</code>. Edit that file to customize:
+    </p>
+    <div class="row g-2">
+      {% for item in [
+        ("AGENT_PERSONA", "Identity & personality"),
+        ("AGENT_TONE", "formal / conversational / encouraging / Socratic"),
+        ("TEACHING_STYLE", "direct / analogical / Socratic / constructivist"),
+        ("PROFICIENCY_INSTRUCTIONS", "Depth per level"),
+        ("SAFETY_RULES", "Content policy"),
+        ("RESPONSE_FORMAT", "Output structure"),
+        ("SUPPORTED_SUBJECTS", "Curriculum subjects"),
+      ] %}
+      <div class="col-sm-6">
+        <div class="d-flex align-items-center gap-2 p-2 rounded-3 bg-body-tertiary">
+          <i class="bi bi-code-slash text-warning"></i>
+          <div>
+            <code class="small">{{ item[0] }}</code>
+            <p class="text-muted mb-0 small">{{ item[1] }}</p>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ── DANGER ZONE ─────────────────────────────────────── -->
+  <div class="glass-card rounded-4 p-4 border border-danger-subtle">
+    <h5 class="fw-bold text-danger mb-3"><i class="bi bi-exclamation-triangle me-2"></i>Danger Zone</h5>
+    <p class="text-muted small mb-3">These actions cannot be undone.</p>
+    <div class="d-flex gap-3 flex-wrap">
+      <button class="btn btn-outline-danger rounded-pill" id="clearHistoryDangerBtn">
+        <i class="bi bi-clock-history me-1"></i>Clear Learning History
+      </button>
+      <button class="btn btn-outline-danger rounded-pill" id="clearDocsDangerBtn">
+        <i class="bi bi-folder-x me-1"></i>Clear All Documents
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/settings.js') }}"></script>
+{% endblock %}

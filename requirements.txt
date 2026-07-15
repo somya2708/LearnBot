@@ -1,0 +1,11 @@
+Flask==3.0.3
+python-dotenv==1.0.1
+ibm-watsonx-ai
+pypdf
+python-docx==1.1.2
+sentence-transformers
+faiss-cpu
+numpy
+Werkzeug==3.0.3
+gunicorn
+chardet==5.2.0

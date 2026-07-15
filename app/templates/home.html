@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block title %}LearnBot — AI Course Simplifier{% endblock %}
+
+{% block content %}
+<!-- HERO ──────────────────────────────────────────────────────── -->
+<section class="hero-section py-5">
+  <div class="container py-4">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-6 animate-fadein">
+        <div class="badge bg-primary-subtle text-primary mb-3 px-3 py-2 rounded-pill fs-6">
+          <i class="bi bi-stars me-1"></i>IBM watsonx.ai Powered
+        </div>
+        <h1 class="display-4 fw-bold lh-1 mb-3">
+          Learn Smarter with<br/>
+          <span class="gradient-text">AI-Powered Simplification</span>
+        </h1>
+        <p class="lead text-muted mb-4">
+          Upload your academic documents, ask questions, and get clear, 
+          level-appropriate explanations powered by IBM Granite models. 
+          Tailored for Beginners, Intermediate, and Expert learners.
+        </p>
+        <div class="d-flex flex-wrap gap-3">
+          <a href="/chat/" class="btn btn-primary btn-lg px-4 rounded-pill">
+            <i class="bi bi-chat-dots me-2"></i>Start Learning
+          </a>
+          <a href="/upload/" class="btn btn-outline-secondary btn-lg px-4 rounded-pill">
+            <i class="bi bi-cloud-upload me-2"></i>Upload Document
+          </a>
+        </div>
+      </div>
+      <div class="col-lg-6 animate-fadein delay-1">
+        <div class="hero-card glass-card p-4 rounded-4">
+          <!-- Simulated chat preview -->
+          <div class="chat-preview">
+            <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
+              <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center text-white">
+                <i class="bi bi-mortarboard-fill"></i>
+              </div>
+              <span class="fw-semibold">LearnBot</span>
+              <span class="badge bg-success-subtle text-success ms-auto">● Live</span>
+            </div>
+            <div class="preview-msg user-msg mb-2">
+              <small class="text-muted">You</small>
+              <p class="mb-0 mt-1">Explain neural networks for a beginner</p>
+            </div>
+            <div class="preview-msg bot-msg">
+              <small class="text-muted">LearnBot</small>
+              <p class="mb-0 mt-1">
+                <strong>Neural networks</strong> are like a brain made of math! 
+                Imagine lots of tiny switches connected together — each one 
+                learns to recognize patterns, just like how you learned to 
+                recognize faces as a child... 🧠
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES ──────────────────────────────────────────────────── -->
+<section class="py-5 bg-body-tertiary">
+  <div class="container">
+    <div class="text-center mb-5">
+      <h2 class="fw-bold">Everything You Need to Learn Effectively</h2>
+      <p class="text-muted">Powered by IBM watsonx.ai Granite — state-of-the-art enterprise AI</p>
+    </div>
+    <div class="row g-4">
+      {% set features = [
+        ("bi-file-earmark-text", "primary", "Document Understanding", "Upload PDF, DOCX, or TXT files. Our RAG pipeline extracts and indexes content for precise, grounded answers."),
+        ("bi-sliders", "success", "Adaptive Learning Levels", "Beginner, Intermediate, or Expert — the AI adjusts vocabulary, depth, and pace to match your knowledge level."),
+        ("bi-lightbulb", "warning", "Real-World Analogies", "Complex theories explained through everyday examples and relatable analogies that stick."),
+        ("bi-patch-question", "info", "Practice & Quizzes", "Auto-generated practice questions and short quizzes to test your understanding after each topic."),
+        ("bi-journal-text", "danger", "Concise Summaries", "Get crisp, accurate summaries of any topic — perfect for revision and exam prep."),
+        ("bi-compass", "purple", "Smart Recommendations", "Prerequisite topics and next learning steps recommended based on your uploaded content."),
+        ("bi-translate", "teal", "Multi-Subject Support", "CS, Math, Physics, Chemistry, Biology, Engineering, Business Studies — and more."),
+        ("bi-clock-history", "orange", "Learning History", "Track every topic you've explored, review past responses, and monitor your progress."),
+      ] %}
+      {% for icon, color, title, desc in features %}
+      <div class="col-sm-6 col-lg-3">
+        <div class="feature-card glass-card p-4 rounded-4 h-100 hover-lift">
+          <div class="feature-icon bg-{{ color }}-subtle text-{{ color }} rounded-3 mb-3">
+            <i class="bi {{ icon }} fs-4"></i>
+          </div>
+          <h6 class="fw-bold mb-2">{{ title }}</h6>
+          <p class="text-muted small mb-0">{{ desc }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS ──────────────────────────────────────────────── -->
+<section class="py-5">
+  <div class="container">
+    <div class="text-center mb-5">
+      <h2 class="fw-bold">How It Works</h2>
+    </div>
+    <div class="row g-4 justify-content-center">
+      {% set steps = [
+        ("1", "bi-cloud-upload", "Upload or Paste", "Upload your academic document (PDF/DOCX/TXT) or paste text directly."),
+        ("2", "bi-sliders2", "Select Your Level", "Choose Beginner, Intermediate, or Expert and pick your subject."),
+        ("3", "bi-chat-dots", "Ask Anything", "Type your question — the agent retrieves relevant content and generates a clear answer."),
+        ("4", "bi-graph-up-arrow", "Track Progress", "Review your learning history and dashboard for insights on your progress."),
+      ] %}
+      {% for num, icon, title, desc in steps %}
+      <div class="col-sm-6 col-lg-3 text-center">
+        <div class="step-card p-4">
+          <div class="step-number">{{ num }}</div>
+          <div class="fs-2 my-3 text-primary"><i class="bi {{ icon }}"></i></div>
+          <h6 class="fw-bold">{{ title }}</h6>
+          <p class="text-muted small">{{ desc }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- SUBJECTS ──────────────────────────────────────────────────── -->
+<section class="py-5 bg-body-tertiary">
+  <div class="container">
+    <div class="text-center mb-4">
+      <h2 class="fw-bold">Supported Subjects</h2>
+    </div>
+    <div class="d-flex flex-wrap justify-content-center gap-2">
+      {% set subject_icons = {
+        'Computer Science': 'bi-cpu',
+        'Mathematics': 'bi-calculator',
+        'Physics': 'bi-lightning',
+        'Chemistry': 'bi-flask',
+        'Biology': 'bi-heart-pulse',
+        'Engineering': 'bi-gear',
+        'Business Studies': 'bi-briefcase',
+        'General / Other': 'bi-book'
+      } %}
+      {% for subj in subjects %}
+      <a href="/chat/" class="badge-subject rounded-pill px-4 py-2 text-decoration-none">
+        <i class="bi {{ subject_icons.get(subj, 'bi-book') }} me-1"></i>{{ subj }}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- CTA ───────────────────────────────────────────────────────── -->
+<section class="py-5">
+  <div class="container text-center">
+    <div class="cta-card glass-card rounded-4 p-5 mx-auto" style="max-width:640px">
+      <i class="bi bi-rocket-takeoff fs-1 text-primary mb-3 d-block"></i>
+      <h2 class="fw-bold mb-3">Ready to Simplify Your Studies?</h2>
+      <p class="text-muted mb-4">Start a conversation with LearnBot or upload your first document now.</p>
+      <a href="/chat/" class="btn btn-primary btn-lg rounded-pill px-5">
+        <i class="bi bi-chat-dots me-2"></i>Launch Chat
+      </a>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Upload Document — LearnBot{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width:860px">
+  <div class="text-center mb-5">
+    <h1 class="fw-bold"><i class="bi bi-cloud-upload text-primary me-2"></i>Upload Document</h1>
+    <p class="text-muted">Upload PDF, DOCX, or TXT files — or paste text directly.<br/>
+      Content is indexed for RAG-powered, grounded answers.</p>
+  </div>
+
+  <div class="row g-4">
+    <!-- ── FILE UPLOAD ───────────────────────────────────────── -->
+    <div class="col-md-6">
+      <div class="glass-card rounded-4 p-4 h-100">
+        <h5 class="fw-bold mb-3"><i class="bi bi-file-earmark-arrow-up text-primary me-2"></i>File Upload</h5>
+        <div class="drop-zone rounded-4 p-4 text-center mb-3" id="dropZone">
+          <i class="bi bi-cloud-upload fs-1 text-primary mb-3 d-block"></i>
+          <p class="fw-semibold mb-1">Drag &amp; drop your file here</p>
+          <p class="text-muted small mb-3">PDF, DOCX, TXT · Max 16 MB</p>
+          <input type="file" id="fileInput" class="d-none" accept=".pdf,.docx,.txt"/>
+          <button class="btn btn-outline-primary rounded-pill" onclick="document.getElementById('fileInput').click()">
+            <i class="bi bi-folder2-open me-2"></i>Browse Files
+          </button>
+        </div>
+        <!-- Selected file info -->
+        <div id="filePreview" class="d-none mb-3">
+          <div class="d-flex align-items-center gap-3 p-3 rounded-3 bg-primary-subtle">
+            <i class="bi bi-file-earmark-text fs-2 text-primary"></i>
+            <div class="flex-grow-1 overflow-hidden">
+              <p class="mb-0 fw-semibold text-truncate" id="fileName"></p>
+              <small class="text-muted" id="fileSize"></small>
+            </div>
+            <button class="btn btn-sm btn-ghost text-danger" id="removeFileBtn">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+        </div>
+        <button class="btn btn-primary w-100 rounded-pill" id="uploadBtn" disabled>
+          <span class="upload-spinner spinner-border spinner-border-sm me-2 d-none"></span>
+          <i class="bi bi-cloud-upload me-2 upload-icon"></i>Upload &amp; Index
+        </button>
+        <!-- Progress bar -->
+        <div class="progress mt-3 d-none rounded-pill" id="uploadProgress" style="height:6px">
+          <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+               role="progressbar" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PASTE TEXT ────────────────────────────────────────── -->
+    <div class="col-md-6">
+      <div class="glass-card rounded-4 p-4 h-100 d-flex flex-column">
+        <h5 class="fw-bold mb-3"><i class="bi bi-textarea-t text-success me-2"></i>Paste Text</h5>
+        <textarea class="form-control flex-grow-1 mb-3 rounded-3" id="pasteText"
+                  placeholder="Paste your academic text, lecture notes, or any content here…"
+                  style="min-height:200px;resize:vertical;font-size:.9rem"></textarea>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <small class="text-muted"><span id="charCount">0</span> characters</small>
+          <button class="btn btn-sm btn-ghost text-muted" id="clearPasteBtn">Clear</button>
+        </div>
+        <button class="btn btn-success w-100 rounded-pill" id="pasteBtn">
+          <span class="paste-spinner spinner-border spinner-border-sm me-2 d-none"></span>
+          <i class="bi bi-lightning-charge me-2 paste-icon"></i>Process Text
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STATUS MESSAGE ─────────────────────────────────────── -->
+  <div id="uploadStatus" class="mt-4 d-none"></div>
+
+  <!-- ── INDEXED DOCUMENTS ──────────────────────────────────── -->
+  <div class="mt-5">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h5 class="fw-bold mb-0">
+        <i class="bi bi-files text-secondary me-2"></i>Indexed Documents
+        <span class="badge bg-secondary-subtle text-secondary ms-2" id="docCountBadge">{{ documents|length }}</span>
+      </h5>
+      {% if documents %}
+      <button class="btn btn-sm btn-outline-danger rounded-pill" id="clearDocsBtn">
+        <i class="bi bi-trash me-1"></i>Clear All
+      </button>
+      {% endif %}
+    </div>
+    <div id="documentsList">
+      {% if documents %}
+        {% for doc in documents[::-1] %}
+        <div class="doc-card glass-card rounded-4 p-3 mb-3 d-flex align-items-start gap-3" data-doc-id="{{ doc.id }}">
+          <div class="doc-icon bg-primary-subtle text-primary rounded-3 p-2 flex-shrink-0">
+            {% if doc.filename.endswith('.pdf') %}<i class="bi bi-file-earmark-pdf fs-4"></i>
+            {% elif doc.filename.endswith('.docx') %}<i class="bi bi-file-earmark-word fs-4"></i>
+            {% else %}<i class="bi bi-file-earmark-text fs-4"></i>{% endif %}
+          </div>
+          <div class="flex-grow-1 overflow-hidden">
+            <p class="fw-semibold mb-1 text-truncate">{{ doc.filename }}</p>
+            <div class="d-flex flex-wrap gap-2 mb-2">
+              <span class="badge bg-body-tertiary text-muted border small">
+                <i class="bi bi-file-word me-1"></i>{{ doc.word_count }} words
+              </span>
+              <span class="badge bg-body-tertiary text-muted border small">
+                <i class="bi bi-puzzle me-1"></i>{{ doc.chunk_count }} chunks
+              </span>
+              <span class="badge bg-body-tertiary text-muted border small">
+                <i class="bi bi-bar-chart me-1"></i>{{ doc.difficulty }}
+              </span>
+              <span class="badge bg-body-tertiary text-muted border small">
+                <i class="bi bi-clock me-1"></i>{{ doc.uploaded_at }}
+              </span>
+            </div>
+            <p class="text-muted small mb-0 text-truncate" title="{{ doc.preview }}">{{ doc.preview }}</p>
+          </div>
+          <a href="/chat/" class="btn btn-sm btn-primary rounded-pill flex-shrink-0">
+            <i class="bi bi-chat-dots me-1"></i>Chat
+          </a>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="text-center py-5 text-muted" id="emptyDocsMsg">
+          <i class="bi bi-folder2-open fs-1 mb-3 d-block"></i>
+          <p>No documents indexed yet. Upload a file or paste text above.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+{% endblock %}

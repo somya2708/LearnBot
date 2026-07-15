@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — LearnBot{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex align-items-center justify-content-between mb-5">
+    <div>
+      <h1 class="fw-bold mb-1"><i class="bi bi-bar-chart-line text-primary me-2"></i>Learner Dashboard</h1>
+      <p class="text-muted mb-0">Your learning stats and progress at a glance.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 fs-6">
+        <i class="bi bi-person-check me-1"></i>{{ proficiency }}
+      </span>
+      <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3 py-2 fs-6">
+        <i class="bi bi-book me-1"></i>{{ subject }}
+      </span>
+    </div>
+  </div>
+
+  <!-- ── STAT CARDS ──────────────────────────────────────────── -->
+  <div class="row g-4 mb-5">
+    {% set stats = [
+      ("bi-chat-text", "primary", "Messages Sent", total_messages),
+      ("bi-journal-bookmark", "success", "Topics Explored", total_sessions),
+      ("bi-file-earmark-text", "info", "Documents Indexed", documents|length),
+      ("bi-stopwatch", reading_mins|string + " min", "Estimated Reading", "⏱"),
+    ] %}
+    {% for icon, color, label, value in [
+      ("bi-chat-text", "primary", "Messages Sent", total_messages),
+      ("bi-journal-bookmark", "success", "Topics Explored", total_sessions),
+      ("bi-file-earmark-text", "info", "Documents Indexed", documents|length),
+      ("bi-stopwatch", "warning", "Reading Time (min)", reading_mins),
+    ] %}
+    <div class="col-sm-6 col-xl-3">
+      <div class="stat-card glass-card rounded-4 p-4 hover-lift">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <span class="stat-icon bg-{{ color }}-subtle text-{{ color }} rounded-3 p-2">
+            <i class="bi {{ icon }} fs-4"></i>
+          </span>
+          <span class="stat-value fw-bold fs-2">{{ value }}</span>
+        </div>
+        <p class="text-muted mb-0 small fw-semibold">{{ label }}</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="row g-4">
+    <!-- ── SUBJECT DISTRIBUTION ────────────────────────────── -->
+    <div class="col-lg-6">
+      <div class="glass-card rounded-4 p-4 h-100">
+        <h6 class="fw-bold mb-4"><i class="bi bi-pie-chart me-2 text-primary"></i>Subject Distribution</h6>
+        {% if subject_counts %}
+          {% set max_count = subject_counts.values() | max %}
+          {% for subj, count in subject_counts.items() %}
+          <div class="mb-3">
+            <div class="d-flex justify-content-between small mb-1">
+              <span class="text-truncate" style="max-width:60%">{{ subj }}</span>
+              <span class="fw-semibold">{{ count }}</span>
+            </div>
+            <div class="progress rounded-pill" style="height:8px">
+              <div class="progress-bar bg-primary rounded-pill"
+                   style="width: {{ (count / max_count * 100)|int }}%"></div>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="text-center py-4 text-muted">
+            <i class="bi bi-pie-chart fs-1 d-block mb-2 opacity-25"></i>
+            <small>No data yet. Start chatting!</small>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ── PROFICIENCY BREAKDOWN ───────────────────────────── -->
+    <div class="col-lg-6">
+      <div class="glass-card rounded-4 p-4 h-100">
+        <h6 class="fw-bold mb-4"><i class="bi bi-sliders me-2 text-success"></i>Proficiency Usage</h6>
+        {% if proficiency_counts %}
+          {% set p_colors = {'Beginner': 'success', 'Intermediate': 'warning', 'Expert': 'danger'} %}
+          {% for level, count in proficiency_counts.items() %}
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <span class="badge bg-{{ p_colors.get(level, 'secondary') }}-subtle text-{{ p_colors.get(level, 'secondary') }} rounded-pill px-3 py-2" style="min-width:110px">
+              {{ level }}
+            </span>
+            <div class="progress flex-grow-1 rounded-pill" style="height:10px">
+              {% set total_p = proficiency_counts.values() | sum %}
+              <div class="progress-bar bg-{{ p_colors.get(level, 'secondary') }} rounded-pill"
+                   style="width:{{ (count / total_p * 100)|int }}%"></div>
+            </div>
+            <span class="small fw-bold" style="min-width:24px">{{ count }}</span>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="text-center py-4 text-muted">
+            <i class="bi bi-sliders fs-1 d-block mb-2 opacity-25"></i>
+            <small>No data yet. Start chatting!</small>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ── DOCUMENTS ───────────────────────────────────────── -->
+    <div class="col-lg-6">
+      <div class="glass-card rounded-4 p-4 h-100">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+          <h6 class="fw-bold mb-0"><i class="bi bi-files me-2 text-info"></i>Indexed Documents</h6>
+          <a href="/upload/" class="btn btn-sm btn-outline-primary rounded-pill">
+            <i class="bi bi-plus-lg me-1"></i>Add
+          </a>
+        </div>
+        {% if documents %}
+          {% for doc in documents[::-1][:5] %}
+          <div class="d-flex align-items-center gap-3 mb-3 p-2 rounded-3 bg-body-tertiary">
+            <i class="bi bi-file-earmark-text text-primary fs-5 flex-shrink-0"></i>
+            <div class="flex-grow-1 overflow-hidden">
+              <p class="mb-0 small fw-semibold text-truncate">{{ doc.filename }}</p>
+              <small class="text-muted">{{ doc.word_count }} words · {{ doc.difficulty }}</small>
+            </div>
+            <span class="badge bg-body-tertiary text-muted border small flex-shrink-0">
+              {{ doc.uploaded_at.split(' ')[0] }}
+            </span>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="text-center py-4 text-muted">
+            <i class="bi bi-folder2-open fs-1 d-block mb-2 opacity-25"></i>
+            <small>No documents yet.</small>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ── RECENT HISTORY ──────────────────────────────────── -->
+    <div class="col-lg-6">
+      <div class="glass-card rounded-4 p-4 h-100">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+          <h6 class="fw-bold mb-0"><i class="bi bi-clock-history me-2 text-warning"></i>Recent Topics</h6>
+          <a href="/history/" class="btn btn-sm btn-ghost text-primary">View All</a>
+        </div>
+        {% if recent_history %}
+          {% for item in recent_history %}
+          <div class="mb-3 p-3 rounded-3 bg-body-tertiary">
+            <div class="d-flex align-items-center justify-content-between mb-1">
+              <span class="badge bg-primary-subtle text-primary small rounded-pill">{{ item.subject }}</span>
+              <small class="text-muted">{{ item.date }}</small>
+            </div>
+            <p class="mb-0 small fw-semibold text-truncate">{{ item.topic }}</p>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="text-center py-4 text-muted">
+            <i class="bi bi-clock-history fs-1 d-block mb-2 opacity-25"></i>
+            <small>No history yet.</small>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TOPICS WORD CLOUD ───────────────────────────────────── -->
+  {% if topics_explored %}
+  <div class="glass-card rounded-4 p-4 mt-4">
+    <h6 class="fw-bold mb-3"><i class="bi bi-tags me-2 text-secondary"></i>Topics Explored</h6>
+    <div class="d-flex flex-wrap gap-2">
+      {% for topic in topics_explored %}
+      <span class="badge bg-body-tertiary text-muted border rounded-pill px-3 py-2">{{ topic }}</span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

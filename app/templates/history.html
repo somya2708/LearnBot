@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Learning History — LearnBot{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width:900px">
+  <div class="d-flex align-items-center justify-content-between mb-5">
+    <div>
+      <h1 class="fw-bold mb-1"><i class="bi bi-clock-history text-primary me-2"></i>Learning History</h1>
+      <p class="text-muted mb-0">A record of all topics you've explored.</p>
+    </div>
+    {% if learn_history %}
+    <button class="btn btn-outline-danger rounded-pill" id="clearAllBtn">
+      <i class="bi bi-trash me-1"></i>Clear All
+    </button>
+    {% endif %}
+  </div>
+
+  {% if learn_history %}
+    <!-- Stats row -->
+    <div class="row g-3 mb-4">
+      <div class="col-auto">
+        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2">
+          <i class="bi bi-journal-bookmark me-1"></i>{{ learn_history|length }} total topics
+        </span>
+      </div>
+    </div>
+
+    <div id="historyList">
+      {% for item in learn_history %}
+      <div class="history-card glass-card rounded-4 p-4 mb-3 animate-fadein" id="hist-{{ item.id }}">
+        <div class="d-flex align-items-start gap-3">
+          <div class="history-icon bg-primary-subtle text-primary rounded-3 p-2 flex-shrink-0">
+            <i class="bi bi-chat-quote fs-5"></i>
+          </div>
+          <div class="flex-grow-1 overflow-hidden">
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+              <span class="badge bg-primary-subtle text-primary rounded-pill small">{{ item.subject }}</span>
+              <span class="badge bg-secondary-subtle text-secondary rounded-pill small">{{ item.proficiency }}</span>
+              <small class="text-muted ms-auto"><i class="bi bi-clock me-1"></i>{{ item.date }}</small>
+            </div>
+            <!-- Question -->
+            <p class="fw-semibold mb-2">{{ item.topic }}</p>
+            <!-- Response preview -->
+            <p class="text-muted small mb-0 history-preview">{{ item.response }}</p>
+          </div>
+          <div class="d-flex flex-column gap-2 flex-shrink-0">
+            <button class="btn btn-sm btn-outline-primary rounded-pill"
+                    onclick="reuseQuestion('{{ item.topic|replace("'","\\'")|replace("\n"," ") }}')"
+                    title="Ask again">
+              <i class="bi bi-arrow-repeat"></i>
+            </button>
+            <button class="btn btn-sm btn-ghost text-danger"
+                    onclick="deleteHistoryItem('{{ item.id }}')"
+                    title="Delete">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-center py-5">
+      <i class="bi bi-clock-history display-1 text-muted opacity-25 mb-3 d-block"></i>
+      <h5 class="text-muted">No learning history yet.</h5>
+      <p class="text-muted">Start chatting to build your history!</p>
+      <a href="/chat/" class="btn btn-primary rounded-pill mt-2">
+        <i class="bi bi-chat-dots me-2"></i>Start Learning
+      </a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function deleteHistoryItem(id) {
+  if (!confirm("Delete this entry?")) return;
+  fetch(`/history/delete/${id}`, {method:"POST"})
+    .then(() => {
+      const el = document.getElementById(`hist-${id}`);
+      if (el) { el.style.opacity = "0"; el.style.transition = "opacity 0.3s"; setTimeout(() => el.remove(), 300); }
+    });
+}
+function clearAllHistory() {
+  if (!confirm("Clear all learning history? This cannot be undone.")) return;
+  fetch("/history/clear", {method:"POST"}).then(() => location.reload());
+}
+function reuseQuestion(question) {
+  sessionStorage.setItem("pendingQuestion", question);
+  window.location.href = "/chat/";
+}
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("clearAllBtn");
+  if (btn) btn.addEventListener("click", clearAllHistory);
+});
+</script>
+{% endblock %}
